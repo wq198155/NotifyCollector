@@ -63,6 +63,15 @@ fun SettingsScreen(nav: NavHostController) {
     var showAbout by remember { mutableStateOf(false) }
     var pendingImportUri by remember { mutableStateOf<Uri?>(null) }
 
+    // 运行时从 PackageManager 读取真实版本号，始终与安装包一致
+    val appVersion by remember {
+        mutableStateOf(
+            runCatching {
+                ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName
+            }.getOrDefault("1.10")
+        )
+    }
+
     // —— 导出备份：SAF 选个目标文件，把全部分组打包成 zip ——
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/zip")
@@ -122,7 +131,7 @@ fun SettingsScreen(nav: NavHostController) {
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("应用：通知接收器")
-                    Text("版本：1.0")
+                    Text("版本：$appVersion")
                     Text("开发者：smartWQ")
                 }
             },
