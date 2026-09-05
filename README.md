@@ -26,7 +26,7 @@
 
 | 首页 | 分组详情 |
 | --- | --- |
-| ![首页](screenshots/home.png) | ![取件码分组（卡片视图，含收到时间）](screenshots/group.png) |
+| ![首页](screenshots/home.png) | ![取件码分组（卡片视图，含时间与图标）](screenshots/group.png) |
 
 | 模板 | 回收站 | 设置 |
 | --- | --- | --- |
@@ -44,9 +44,9 @@
 
 ## 文件信息
 
-- 下载：<https://github.com/wq198155/NotifyCollector/releases> 获取最新 `NotifyCollector-1.2.apk`（已签名，可直接侧载）
+- 下载：<https://github.com/wq198155/NotifyCollector/releases> 获取最新 `NotifyCollector-1.3.apk`（已签名，可直接侧载）
 - 大小：约 11.8 MB（含钉钉进步体字体 2.1 MB）
-- SHA-256：`ebcd46700220b184d963e39643946c670f38597855f7f4e1d7d08b5c68483c4a`
+- SHA-256：`f960f2c2c2480de1c487c2846837b1d134ba73fbd27de3a6be1515b172307ebe`
 - 签名：用 Android 调试密钥签名（仅供自用 / 侧载宣传，未上架）。如需正式分发请自行配置 release 签名。
 - 字体：全 App 统一使用「钉钉进步体」（单一字重 Regular）
 - 最低系统：Android 7.0（API 24）
@@ -69,6 +69,7 @@
 
 ## 版本
 
+- v1.3：卡片时间前加时钟图标，地点前加地点针图标；卡片之间留上下间距（移除卡片间的分隔线）
 - v1.2：卡片中「取件码」右侧新增短信收到时间（MM-dd HH:mm）
 - v1.1：取件码分组新增卡片视图（取件码 / 公司名 / 取件点三行）
 - v1.0
