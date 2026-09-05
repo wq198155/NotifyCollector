@@ -12,8 +12,8 @@ android {
         applicationId = "com.example.notifycollector"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 9
+        versionName = "1.9"
     }
 
     buildFeatures {

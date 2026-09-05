@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Schedule
@@ -38,8 +39,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import android.widget.Toast
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -207,6 +212,8 @@ fun GroupDetailScreen(nav: NavHostController, groupId: Long) {
 @Composable
 private fun ParcelCard(n: NotificationEntity, dim: Boolean) {
     val p = parseParcel(n)
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -214,16 +221,11 @@ private fun ParcelCard(n: NotificationEntity, dim: Boolean) {
             .alpha(if (dim) 0.5f else 1f)
     ) {
         Column(Modifier.padding(16.dp)) {
+            // 时间：右上角小字，单独成行，避免复制按钮被挤到时间左侧
             Row(
                 Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.End
             ) {
-                Text(
-                    p.code ?: "（无取件码）",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
-                )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         Icons.Filled.Schedule,
@@ -236,6 +238,42 @@ private fun ParcelCard(n: NotificationEntity, dim: Boolean) {
                         fmt(n.postTime),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            // 第一行：大号取件码 + 复制按钮（复制按钮紧挨取件码右侧）
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    p.code ?: "（无取件码）",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                // 复制取件码：点一下把取件码写入剪贴板并弹提示；无码时给出兜底提示
+                IconButton(
+                    onClick = {
+                        val code = p.code
+                        if (!code.isNullOrBlank()) {
+                            clipboardManager.setText(AnnotatedString(code))
+                            Toast.makeText(
+                                context,
+                                "已复制取件码：$code",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "无取件码可复制",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    },
+                    modifier = Modifier.size(40.dp).align(Alignment.CenterVertically)
+                ) {
+                    Icon(
+                        Icons.Filled.ContentCopy,
+                        contentDescription = "复制取件码",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }

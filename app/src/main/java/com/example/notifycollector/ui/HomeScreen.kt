@@ -29,7 +29,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -86,8 +85,6 @@ fun HomeScreen(nav: NavHostController) {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // 长按弹出的「编辑 / 删除」菜单状态
-    var menuGroup by remember { mutableStateOf<GroupEntity?>(null) }
     var pendingDeleteGroup by remember { mutableStateOf<GroupEntity?>(null) }
 
     // —— 首页列表拖拽排序模式 ——
@@ -97,7 +94,7 @@ fun HomeScreen(nav: NavHostController) {
     var dragOffset by remember { mutableStateOf(0f) }
     val listState = rememberLazyListState()
 
-    fun enterReorder(gwc: GroupWithCount) {
+    fun enterReorder() {
         editOrder = groups
         reorderMode = true
     }
@@ -110,26 +107,6 @@ fun HomeScreen(nav: NavHostController) {
 
     // 实际展示的列表：排序模式下用本地快照 editOrder，否则用数据库流 groups
     val displayList = if (reorderMode) editOrder else groups
-
-    menuGroup?.let { g ->
-        AlertDialog(
-            onDismissRequest = { menuGroup = null },
-            title = { Text(g.name) },
-            text = { Text("编辑规则（不会重新归类已收通知），或删除整个分组。") },
-            confirmButton = {
-                TextButton(onClick = {
-                    menuGroup = null
-                    nav.navigate("edit/${g.id}")
-                }) { Text("编辑") }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    pendingDeleteGroup = g
-                    menuGroup = null
-                }) { Text("删除", color = MaterialTheme.colorScheme.error) }
-            }
-        )
-    }
 
     // 二次确认：删除分组
     pendingDeleteGroup?.let { g ->
@@ -242,12 +219,12 @@ fun HomeScreen(nav: NavHostController) {
                         } else {
                             SwipeRevealRow(
                                 onTap = { nav.navigate("group/${g.id}") },
-                                onLongPress = { enterReorder(gwc) },
+                                onLongPress = { enterReorder() },
                                 actions = listOf(
                                     SwipeAction(
                                         "编辑",
                                         color = Color(0xFF2196F3)
-                                    ) { menuGroup = g },
+                                    ) { nav.navigate("edit/${g.id}") },
                                     SwipeAction(
                                         "删除",
                                         color = Color(0xFFE53935)
