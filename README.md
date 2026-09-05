@@ -44,9 +44,9 @@
 
 ## 文件信息
 
-- 下载：<https://github.com/wq198155/NotifyCollector/releases> 获取最新 `NotifyCollector-1.3.apk`（已签名，可直接侧载）
+- 下载：<https://github.com/wq198155/NotifyCollector/releases> 获取最新 `NotifyCollector-1.4.apk`（已签名，可直接侧载）
 - 大小：约 11.8 MB（含钉钉进步体字体 2.1 MB）
-- SHA-256：`f960f2c2c2480de1c487c2846837b1d134ba73fbd27de3a6be1515b172307ebe`
+- SHA-256：`d0fef040f3040125c70f609517b27eabc537937c9454ccf8e0bf3826584ad2cb`
 - 签名：用 Android 调试密钥签名（仅供自用 / 侧载宣传，未上架）。如需正式分发请自行配置 release 签名。
 - 字体：全 App 统一使用「钉钉进步体」（单一字重 Regular）
 - 最低系统：Android 7.0（API 24）
@@ -69,6 +69,7 @@
 
 ## 版本
 
+- v1.4：卡片「快递公司名」字号加大（titleSmall → titleMedium），一眼看清是哪个快递
 - v1.3：卡片时间前加时钟图标，地点前加地点针图标；卡片之间留上下间距（移除卡片间的分隔线）
 - v1.2：卡片中「取件码」右侧新增短信收到时间（MM-dd HH:mm）
 - v1.1：取件码分组新增卡片视图（取件码 / 公司名 / 取件点三行）

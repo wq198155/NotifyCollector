@@ -241,7 +241,7 @@ private fun ParcelCard(n: NotificationEntity, dim: Boolean) {
             }
             Text(
                 p.company ?: "（未知快递）",
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
             Row(verticalAlignment = Alignment.Top) {
