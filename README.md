@@ -36,14 +36,14 @@
 > 仅适用于 Android 7.0+。由于本 App 声明 `QUERY_ALL_PACKAGES`，**无法上架 Google Play**，请手动侧载。
 
 1. 手机开启「未知来源安装」或对应品牌的「安装外部来源应用」权限。
-2. 从本仓库 **Releases** 页下载 `NotifyCollector-1.0.apk` 传到手机。
+2. 从本仓库 Releases 页（<https://github.com/wq198155/NotifyCollector/releases>）下载 `NotifyCollector-1.0.apk` 传到手机。
 3. 点击 APK 完成安装。
 4. 首次打开 App，按引导进入系统「通知使用权」页面，开启「通知收集器」的权限。
 5. 在「设置 → 模板」里一键添加预置分组（如「验证码」「取件码」），或在首页点右下「+」新建分组。
 
 ## 文件信息
 
-- 下载：前往本仓库 **Releases** 页获取 `NotifyCollector-1.0.apk`（已签名，可直接侧载）
+- 下载：<https://github.com/wq198155/NotifyCollector/releases> 获取 `NotifyCollector-1.0.apk`（已签名，可直接侧载）
 - 大小：约 11.3 MB（含钉钉进步体字体 2.1 MB）
 - SHA-256：`d08f3de63f1daee3c4ffc3ccc7a4d931b5d38103f05db7205031d58866ed3d89`
 - 签名：用 Android 调试密钥签名（仅供自用 / 侧载宣传，未上架）。如需正式分发请自行配置 release 签名。
