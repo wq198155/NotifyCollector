@@ -29,7 +29,8 @@ private fun hasCJK(s: String): Boolean = s.any { it in '\u4e00'..'\u9fff' }
  * 否则「已到达」会被单独的「到」抢先匹配，切出多余的「达」字。
  */
 private val LOC_START = Regex(
-    "已送达至|送达至|已到达|到达|已到|已送至|送至|送到|" +
+    "已放置于|放置于|已放置至|放置至|" +
+        "已送达至|送达至|已到达|到达|已到|已送至|送至|送到|" +
         "已放到|放到|已放至|放至|已放置|放置在|放在|已放|放置|寄放|" +
         "位于|地址|位置|到|至|处"
 )
@@ -53,10 +54,15 @@ private val STRONG_ADDR =
     Regex("\\d+号|室|栋|楼|单元|层|驿站|自提|丰巢|菜鸟|超市|便利店|门面|门市|店")
 
 /** 地址片段尾部常见的多余动词/提示语，提取后剔除 */
-private val TAIL_NOISE = Regex("(?:取件码|取件|领取|领件|领取件|签收|自提|领取|领|取|拿)+$")
+private val TAIL_NOISE =
+    Regex("(?:取件码|取件|领取|领件|领取件|签收|自提|代收|代取|领取|请|领|取|拿)+$")
+
+/** 地址片段开头常见的多余主语（无「到/至」起点标记时容易整句拖进来） */
+private val PREFIX_NOISE = Regex("^(?:您的快件|您的包裹|您的快递|您的|快件|包裹|快递)+")
 
 /** 地址片段开头常见的多余连接词/量词/残字 */
-private val HEAD_NOISE = charArrayOf('的', '了', '达', '至', '在', '到', '：', ':', ' ')
+private val HEAD_NOISE =
+    charArrayOf('的', '了', '达', '至', '在', '到', '于', '由', '已', '：', ':', ' ')
 
 /**
  * 清洗地址片段：去括号空白、去尾部动词、去开头连接词；
@@ -72,6 +78,9 @@ private fun cleanLocation(raw: String): String? {
     if (s.startsWith("(") && !s.endsWith(")")) s = s.removePrefix("(")
     if (s.endsWith(")") && !s.contains("(")) s = s.removeSuffix(")")
     s = s.trim().trimStart(*HEAD_NOISE).trim()
+    // 剥掉整句被卷进来的主语（「您的快递已由丰巢柜代收」→「丰巢柜代收」）
+    s = s.replace(PREFIX_NOISE, "").trim()
+    s = s.trimStart(*HEAD_NOISE).trim()
     if (s.length < 2 || !hasCJK(s)) return null
     // 必须含强地址特征，否则判为误抓（如金融类短信）
     if (!STRONG_ADDR.containsMatchIn(s)) return null
