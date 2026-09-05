@@ -3,6 +3,7 @@ package com.example.notifycollector.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -205,11 +206,22 @@ private fun ParcelCard(n: NotificationEntity, dim: Boolean) {
             .alpha(if (dim) 0.5f else 1f)
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text(
-                p.code ?: "（无取件码）",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    p.code ?: "（无取件码）",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    fmt(n.postTime),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             Text(
                 p.company ?: "（未知快递）",
                 style = MaterialTheme.typography.titleSmall,
