@@ -51,6 +51,12 @@
 - 最低系统：Android 7.0（API 24）
 - 目标系统：Android 14（API 34）
 
+## 隐私政策
+
+- 本 App 不申请任何网络权限，不连接互联网，不向任何服务器上传数据。
+- 所有通知内容仅存储在用户设备本地的 Room（SQLite）数据库。
+- 详见 [PrivacyPolicy.md](PrivacyPolicy.md)（或 GitHub 上对应文件）。
+
 ## 技术栈（自用 / 二开参考）
 
 - Kotlin + Jetpack Compose + Material 3
