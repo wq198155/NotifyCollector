@@ -1,0 +1,10 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 铃铛：缩小并严格居中（中心对齐画布 54,54）。x 范围 38~70（中心54），y 范围 40~68（中心54）。 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,40 C48,40 42,44 42,51 L42,58 L38,64 L70,64 L66,58 L66,51 C66,44 60,40 54,40 Z M51,68 a3,3 0 0 0 6,0" />
+</vector>
