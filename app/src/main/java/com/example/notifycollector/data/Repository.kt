@@ -39,7 +39,8 @@ class Repository(
                 matchType = p.matchType,
                 pattern = p.pattern,
                 codePattern = p.codePattern,
-                expireMinutes = p.expireMinutes
+                expireMinutes = p.expireMinutes,
+                cardView = p.cardView
             )
         )
         return true

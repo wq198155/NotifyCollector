@@ -49,7 +49,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         matchType: String,
         pattern: String,
         codePattern: String,
-        expireMinutes: Int = 0
+        expireMinutes: Int = 0,
+        cardView: Boolean = false
     ) {
         viewModelScope.launch {
             repo.insertGroup(
@@ -58,7 +59,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     matchType = matchType,
                     pattern = pattern,
                     codePattern = codePattern,
-                    expireMinutes = expireMinutes
+                    expireMinutes = expireMinutes,
+                    cardView = cardView
                 )
             )
         }

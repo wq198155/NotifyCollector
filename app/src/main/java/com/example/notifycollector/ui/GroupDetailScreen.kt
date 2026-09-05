@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -31,11 +32,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.notifycollector.data.NotificationEntity
+import com.example.notifycollector.util.parseParcel
 import com.example.notifycollector.viewmodel.MainViewModel
 import kotlinx.coroutines.delay
 
@@ -148,38 +151,75 @@ fun GroupDetailScreen(nav: NavHostController, groupId: Long) {
                             ) { pendingDeleteOne = n }
                         )
                     ) {
-                        ListItem(
-                            headlineContent = { Text(n.title.ifBlank { n.appName }) },
-                            supportingContent = {
-                                Text((n.text.ifBlank { "（无内容）" }).take(80), maxLines = 1)
-                            },
-                            trailingContent = {
-                                when {
-                                    n.read -> Text(
-                                        "已读",
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                    expired -> Text(
-                                        "已过期",
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                    else -> Text(
-                                        fmt(n.postTime),
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .alpha(if (dim) 0.5f else 1f)
-                        )
+                        if (group?.cardView == true) {
+                            // 取件码等卡片视图分组：三行卡片（取件码 / 快递公司 / 地点）
+                            ParcelCard(n, dim)
+                        } else {
+                            ListItem(
+                                headlineContent = { Text(n.title.ifBlank { n.appName }) },
+                                supportingContent = {
+                                    Text((n.text.ifBlank { "（无内容）" }).take(80), maxLines = 1)
+                                },
+                                trailingContent = {
+                                    when {
+                                        n.read -> Text(
+                                            "已读",
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                        expired -> Text(
+                                            "已过期",
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                        else -> Text(
+                                            fmt(n.postTime),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .alpha(if (dim) 0.5f else 1f)
+                            )
+                        }
                         HorizontalDivider()
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * 取件码卡片：第一行大号加粗取件码，第二行快递公司名，第三行快递站地点。
+ * 解析失败的字段用兜底文案/正文填充，保证卡片始终可读。
+ */
+@Composable
+private fun ParcelCard(n: NotificationEntity, dim: Boolean) {
+    val p = parseParcel(n)
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha(if (dim) 0.5f else 1f)
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Text(
+                p.code ?: "（无取件码）",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                p.company ?: "（未知快递）",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                p.location ?: n.text.take(40),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

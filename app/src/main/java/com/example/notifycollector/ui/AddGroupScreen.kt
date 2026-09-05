@@ -60,6 +60,7 @@ fun AddGroupScreen(nav: NavHostController, groupId: Long? = null) {
     var pattern by remember { mutableStateOf("") }
     var codePattern by remember { mutableStateOf("(?:验证码|动态密码|code)[^0-9]{0,12}?([0-9]{4,8})") }
     var expireText by remember { mutableStateOf("0") }
+    var cardView by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
     var initialized by remember { mutableStateOf(false) }
 
@@ -72,6 +73,7 @@ fun AddGroupScreen(nav: NavHostController, groupId: Long? = null) {
             pattern = g.pattern
             codePattern = g.codePattern
             expireText = g.expireMinutes.toString()
+            cardView = g.cardView
             initialized = true
         }
     }
@@ -172,7 +174,8 @@ fun AddGroupScreen(nav: NavHostController, groupId: Long? = null) {
                                     matchType = matchType,
                                     pattern = trimmedPattern,
                                     codePattern = codePattern.trim(),
-                                    expireMinutes = minutes ?: 0
+                                    expireMinutes = minutes ?: 0,
+                                    cardView = cardView
                                 )
                             )
                         } else {
@@ -181,7 +184,8 @@ fun AddGroupScreen(nav: NavHostController, groupId: Long? = null) {
                                 matchType = matchType,
                                 pattern = trimmedPattern,
                                 codePattern = codePattern.trim(),
-                                expireMinutes = minutes ?: 0
+                                expireMinutes = minutes ?: 0,
+                                cardView = cardView
                             )
                         }
                         nav.popBackStack()

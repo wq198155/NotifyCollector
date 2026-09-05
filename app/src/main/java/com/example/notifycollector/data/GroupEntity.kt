@@ -27,6 +27,13 @@ data class GroupEntity(
      */
     @ColumnInfo(defaultValue = "0")
     val sortOrder: Int = 0,
+    /**
+     * 是否以「卡片」形式展示该分组的通知列表（而非默认列表项）。
+     * 取件码等需要突出「取件码 / 快递公司 / 地点」的分组设为 true，
+     * 列表项会渲染为三行卡片。Boolean 在 SQLite 中以 INTEGER 存储，0=false/1=true。
+     */
+    @ColumnInfo(defaultValue = "0")
+    val cardView: Boolean = false,
     val createdAt: Long = System.currentTimeMillis()
 ) {
     /** 判断某条通知（按其发生时间）是否已过期 */

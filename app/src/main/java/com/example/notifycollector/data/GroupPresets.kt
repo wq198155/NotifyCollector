@@ -10,6 +10,8 @@ data class PresetGroup(
     val pattern: String,
     val codePattern: String = "",
     val expireMinutes: Int = 0,
+    /** 列表是否以卡片形式展示（取件码等需要突出取件码/公司/地点的分组为 true） */
+    val cardView: Boolean = false,
     /** 模板列表里展示的一句话说明 */
     val desc: String
 )
@@ -41,6 +43,7 @@ object GroupPresets {
             //  不做"裸数字兜底"——无取/凭/码语境的纯数字（手机号、运单号、门牌）一律不认，杜绝误抓。
             codePattern = "(?:取件码|取件凭证|取件号|凭码|凭|取件|取货号|码|包裹|快递柜|柜)[^0-9]{0,20}?([0-9]+(?:[-—][0-9]+){1,2})|(?:取件码|取件凭证|取件号|凭|取件|码)[^0-9]{0,2}?([0-9]{2,}(?:[-—][0-9]+){0,2})(?!室|栋|号|楼)",
             expireMinutes = 0,
+            cardView = true,
             desc = "含快递公司名(顺丰/中通/圆通/韵达/极兔…)或 快递/物流/取件/包裹 等关键字，且带数字取件号(无短线或 1~2 个短线)即收集"
         ),
         PresetGroup(
