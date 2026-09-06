@@ -3,6 +3,7 @@ package com.example.notifycollector.util
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.net.Uri
 import android.util.Log
 import com.example.notifycollector.data.AiConfig
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
@@ -93,17 +94,18 @@ object NotificationAiAnalyzer {
 
     /**
      * 下载模型到 filesDir/ai/。[requireWifi] 为 true 时仅在 Wi-Fi 下执行（避免蜂窝流量拉取上 GB 文件）。
-     * 通过 [onProgress] 回报 0-100；返回是否成功。
+     * 通过 [onProgress] 回报 0-100；返回 null 表示成功，否则返回人类可读的失败原因。
      */
     suspend fun downloadModel(
         context: Context,
         url: String = AiConfig.DEFAULT_MODEL_URL,
         requireWifi: Boolean = true,
         onProgress: (Int) -> Unit = {}
-    ): Boolean = withContext(Dispatchers.IO) {
+    ): String? = withContext(Dispatchers.IO) {
+        if (url.isBlank()) return@withContext "未填写模型地址，请先填写或改用「从本机导入」"
         if (requireWifi && !isWifi(context)) {
             _state.value = Status.ERROR to 0
-            return@withContext false
+            return@withContext "当前未连接 Wi-Fi，已取消下载（避免消耗蜂窝流量）"
         }
         _state.value = Status.DOWNLOADING to 0
         try {
@@ -117,10 +119,11 @@ object NotificationAiAnalyzer {
                 connect()
             }
             if (conn.responseCode !in 200..299) {
+                conn.disconnect()
                 _state.value = Status.ERROR to 0
-                return@withContext false
+                return@withContext "服务器返回 HTTP ${conn.responseCode}（地址可能失效或被拦截）"
             }
-            val total = conn.contentLength.takeIf { it > 0 } ?: -1
+            val total = conn.contentLengthLong.takeIf { it > 0 } ?: -1L
             val input = BufferedInputStream(conn.inputStream)
             val output = FileOutputStream(target)
             val buf = ByteArray(64 * 1024)
@@ -134,11 +137,36 @@ object NotificationAiAnalyzer {
             output.flush(); output.close(); input.close(); conn.disconnect()
             onProgress(100)
             _state.value = Status.NOT_DOWNLOADED to 0
-            true
+            null
         } catch (e: Exception) {
             Log.e(TAG, "download failed", e)
             _state.value = Status.ERROR to 0
-            false
+            e.message ?: "下载异常：${e.javaClass.simpleName}"
+        }
+    }
+
+    /**
+     * 从本机选择一个 .task 文件并复制到应用私有目录（完全不联网）。
+     * 返回 null 表示成功，否则返回失败原因。
+     */
+    suspend fun importModelFromUri(context: Context, uri: Uri): String? = withContext(Dispatchers.IO) {
+        try {
+            val dir = File(context.filesDir, "ai")
+            dir.mkdirs()
+            val target = modelFile(context)
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                FileOutputStream(target).use { out ->
+                    val buf = ByteArray(64 * 1024)
+                    var n: Int
+                    while (input.read(buf).also { n = it } != -1) out.write(buf, 0, n)
+                    out.flush()
+                }
+            } ?: return@withContext "无法读取所选文件"
+            _state.value = Status.NOT_DOWNLOADED to 0
+            null
+        } catch (e: Exception) {
+            Log.e(TAG, "import model failed", e)
+            e.message ?: "导入失败：${e.javaClass.simpleName}"
         }
     }
 

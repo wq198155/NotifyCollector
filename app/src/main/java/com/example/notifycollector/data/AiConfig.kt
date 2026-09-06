@@ -16,11 +16,14 @@ object AiConfig {
     const val MIN_CONFIDENCE = 0.5
 
     /**
-     * 默认模型地址：MediaPipe 官方托管的 Gemma-2B int4 任务文件（约 1.5GB）。
-     * 若下载失败，可在「设置 → AI 智能解析」里改成可用的镜像地址。
+     * 默认模型地址（留空）。
+     * MediaPipe 官方 GCS 路径已整体下架、HuggingFace 需登录授权，公共免鉴权直链不稳定，
+     * 因此默认不填。推荐二选一：
+     *  1) 自托管：把 model.task 放到你自己的服务器（如 https://你的域名/models/gemma-2b-it-cpu-int4.task），
+     *     在「设置 → AI 智能解析 → 模型地址」填写该地址后点「下载模型」；
+     *  2) 或点「从本机导入」，把电脑上下好的 .task 通过微信/数据线传到手机后直接导入（完全不联网）。
      */
-    const val DEFAULT_MODEL_URL =
-        "https://storage.googleapis.com/mediapipe-models/llm/gemma-2b-it-cpu-int4/gemma-2b-it-cpu-int4.task"
+    const val DEFAULT_MODEL_URL = ""
 
     /** 构造给模型的提示词：要求只输出一个 JSON 对象 */
     fun buildPrompt(title: String, text: String): String = buildString {

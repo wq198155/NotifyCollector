@@ -81,11 +81,12 @@ fun SettingsScreen(nav: NavHostController) {
     val aiState by NotificationAiAnalyzer.state.collectAsState()
     val (aiStatus, aiProgress) = aiState
     val settingsStore = remember { SettingsStore(ctx) }
-    val present = NotificationAiAnalyzer.isModelPresent(ctx)
+    var present by remember { mutableStateOf(NotificationAiAnalyzer.isModelPresent(ctx)) }
     var aiEnabled by remember { mutableStateOf(settingsStore.aiEnabled) }
     var aiLowConf by remember { mutableStateOf(settingsStore.aiLowConfOnly) }
     var aiUrl by remember { mutableStateOf(settingsStore.aiModelUrl) }
     var downloading by remember { mutableStateOf(false) }
+    var importing by remember { mutableStateOf(false) }
     val aiStatusText = when {
         aiStatus == NotificationAiAnalyzer.Status.READY -> "模型已就绪"
         aiStatus == NotificationAiAnalyzer.Status.DOWNLOADING || aiProgress > 0 -> "下载中 ${aiProgress}%"
@@ -120,6 +121,24 @@ fun SettingsScreen(nav: NavHostController) {
     ) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         pendingImportUri = uri
+    }
+
+    // —— 导入 AI 模型文件：SAF 选本地 .task，复制到应用私有目录（不联网）——
+    val modelImportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            importing = true
+            val err = NotificationAiAnalyzer.importModelFromUri(ctx, uri)
+            importing = false
+            present = NotificationAiAnalyzer.isModelPresent(ctx)
+            Toast.makeText(
+                ctx,
+                if (err == null) "模型已导入，首次推理时自动加载" else "导入失败：$err",
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
 
     pendingImportUri?.let { uri ->
@@ -300,21 +319,36 @@ fun SettingsScreen(nav: NavHostController) {
                 headlineContent = { Text("模型状态") },
                 supportingContent = { Text(aiStatusText) },
                 trailingContent = {
-                    if (!downloading) {
+                    if (!downloading && !importing) {
                         TextButton(onClick = {
                             scope.launch {
                                 downloading = true
-                                val ok = NotificationAiAnalyzer.downloadModel(ctx, aiUrl, requireWifi = true) {}
+                                val err = NotificationAiAnalyzer.downloadModel(ctx, aiUrl, requireWifi = true) {}
                                 downloading = false
+                                present = NotificationAiAnalyzer.isModelPresent(ctx)
                                 Toast.makeText(
                                     ctx,
-                                    if (ok) "模型下载完成" else "下载失败（请连 Wi-Fi 或检查地址）",
+                                    if (err == null) "模型下载完成" else "下载失败：$err",
                                     Toast.LENGTH_LONG
                                 ).show()
                             }
                         }) { Text(if (present) "重新下载" else "下载模型") }
                     } else {
-                        Text("下载中 ${aiProgress}%", color = MaterialTheme.colorScheme.primary)
+                        Text(
+                            if (importing) "导入中…" else "下载中 ${aiProgress}%",
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            )
+            ListItem(
+                headlineContent = { Text("从本机导入模型") },
+                supportingContent = { Text("把电脑下好的 .task 传到手机后在此选择，完全不联网，最可靠") },
+                trailingContent = {
+                    if (!downloading && !importing) {
+                        TextButton(onClick = { modelImportLauncher.launch(arrayOf("*/*")) }) { Text("选择文件") }
+                    } else {
+                        Text("…", color = MaterialTheme.colorScheme.primary)
                     }
                 }
             )
