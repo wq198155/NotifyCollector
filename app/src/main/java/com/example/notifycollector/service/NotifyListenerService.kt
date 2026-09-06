@@ -7,6 +7,7 @@ import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import com.example.notifycollector.NotifyApplication
 import com.example.notifycollector.data.GroupEntity
+import com.example.notifycollector.data.GroupPresets
 import com.example.notifycollector.data.NotificationEntity
 import com.example.notifycollector.data.SettingsStore
 import com.example.notifycollector.util.AiResult
@@ -119,8 +120,22 @@ class NotifyListenerService : NotificationListenerService() {
             // 正则未命中，但 AI 给出分类 -> 归入同名/包含该分类的现有分组，提升召回
             val cat = ai.category
             if (!cat.isNullOrBlank()) {
-                val target = groups.firstOrNull { it.name == cat }
+                var target = groups.firstOrNull { it.name == cat }
                     ?: groups.firstOrNull { cat in it.name || it.name.contains(cat) }
+                // AI 分类命中某个预设模板名，但用户尚未添加该分组（预设需手动点「添加」才会进 DB）
+                // -> 按预设自动创建，避免「AI 已识别出是某类通知、却因无对应分组而被丢弃」。
+                // 仅对预设名生效，不做任意分类的自动建组，避免误建。
+                if (target == null) {
+                    // AI 可能返回带冗余后缀的分类（如 "快递物流 / 其他"），
+                    // 故先精确匹配，再退化为「预设名是 AI 分类的子串」的容错匹配。
+                    val preset = GroupPresets.all.firstOrNull { it.name == cat }
+                        ?: GroupPresets.all.firstOrNull { cat != null && (cat.startsWith(it.name) || it.name in cat) }
+                    if (preset != null) {
+                        repo.addPreset(preset) // 同名已存在则内部直接返回 false，安全幂等
+                        target = repo.allGroups().firstOrNull { it.name == cat }
+                            ?: repo.allGroups().firstOrNull { cat != null && (cat.startsWith(it.name) || it.name in cat) }
+                    }
+                }
                 if (target != null) {
                     val code = ai.code
                     if (target.codePattern.isNotBlank() && code == null) return
