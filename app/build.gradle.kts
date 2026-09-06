@@ -12,8 +12,8 @@ android {
         applicationId = "com.example.notifycollector"
         minSdk = 24
         targetSdk = 34
-        versionCode = 10
-        versionName = "1.10"
+        versionCode = 11
+        versionName = "1.11"
     }
 
     buildFeatures {
@@ -50,4 +50,7 @@ dependencies {
     implementation("androidx.room:room-ktx:2.6.1")
     kapt("androidx.room:room-compiler:2.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+
+    // 离线 AI 解析（本地 LLM，首次运行下载模型）
+    implementation("com.google.mediapipe:tasks-genai:0.10.14")
 }

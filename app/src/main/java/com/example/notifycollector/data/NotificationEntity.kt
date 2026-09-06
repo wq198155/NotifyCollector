@@ -26,5 +26,18 @@ data class NotificationEntity(
      * 默认 false（未读）。Room 将 Boolean 映射为 INTEGER，0=false/1=true。
      */
     @ColumnInfo(defaultValue = "0")
-    val read: Boolean = false
+    val read: Boolean = false,
+
+    // —— 离线 AI 智能解析补充字段（仅启用 AI 且正则不足时使用；可空，不影响主流程）——
+    /** AI 判定的快递/承运公司名，正则缺失时用于补全展示 */
+    val aiCompany: String? = null,
+    /** AI 判定的取件地址，正则缺失时用于补全展示 */
+    val aiLocation: String? = null,
+    /** AI 给出的置信度（0~1），仅作记录参考 */
+    val aiConfidence: Double? = null,
+    /** 本条是否经过 AI 解析补全（用于 UI 优先展示 AI 字段） */
+    @ColumnInfo(defaultValue = "0")
+    val aiUsed: Boolean = false,
+    /** AI 判定的分类：当正则未命中、由 AI 归类到某现有分组时填入 */
+    val aiCategory: String? = null
 )

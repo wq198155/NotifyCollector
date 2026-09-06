@@ -42,9 +42,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.example.notifycollector.data.SettingsStore
+import com.example.notifycollector.util.NotificationAiAnalyzer
 import com.example.notifycollector.util.RuleBackup
 import com.example.notifycollector.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
@@ -70,6 +75,23 @@ fun SettingsScreen(nav: NavHostController) {
                 ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName
             }.getOrDefault("1.10")
         )
+    }
+
+    // —— 离线 AI 解析相关状态 ——
+    val aiState by NotificationAiAnalyzer.state.collectAsState()
+    val (aiStatus, aiProgress) = aiState
+    val settingsStore = remember { SettingsStore(ctx) }
+    val present = NotificationAiAnalyzer.isModelPresent(ctx)
+    var aiEnabled by remember { mutableStateOf(settingsStore.aiEnabled) }
+    var aiLowConf by remember { mutableStateOf(settingsStore.aiLowConfOnly) }
+    var aiUrl by remember { mutableStateOf(settingsStore.aiModelUrl) }
+    var downloading by remember { mutableStateOf(false) }
+    val aiStatusText = when {
+        aiStatus == NotificationAiAnalyzer.Status.READY -> "模型已就绪"
+        aiStatus == NotificationAiAnalyzer.Status.DOWNLOADING || aiProgress > 0 -> "下载中 ${aiProgress}%"
+        aiStatus == NotificationAiAnalyzer.Status.ERROR -> "下载/加载失败，请重试或换地址"
+        present -> "已下载，首次推理时自动加载"
+        else -> "未下载（约 1.5GB，需 Wi-Fi）"
     }
 
     // —— 导出备份：SAF 选个目标文件，把全部分组打包成 zip ——
@@ -242,6 +264,71 @@ fun SettingsScreen(nav: NavHostController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { importLauncher.launch(arrayOf("application/zip")) }
+            )
+            HorizontalDivider()
+
+            // —— AI 智能解析 ——
+            SectionHeader("AI 智能解析")
+            ListItem(
+                headlineContent = { Text("启用 AI 智能解析") },
+                supportingContent = { Text("本地离线模型，不联网上传内容；仅未命中/低置信通知才调用，配合正则提高准确率") },
+                trailingContent = {
+                    Switch(
+                        checked = aiEnabled,
+                        onCheckedChange = {
+                            aiEnabled = it
+                            settingsStore.aiEnabled = it
+                        }
+                    )
+                }
+            )
+            ListItem(
+                headlineContent = { Text("仅低置信时调用") },
+                supportingContent = { Text("关闭则每条通知都过 AI（最准但最耗电）") },
+                trailingContent = {
+                    Switch(
+                        checked = aiLowConf,
+                        enabled = aiEnabled,
+                        onCheckedChange = {
+                            aiLowConf = it
+                            settingsStore.aiLowConfOnly = it
+                        }
+                    )
+                }
+            )
+            ListItem(
+                headlineContent = { Text("模型状态") },
+                supportingContent = { Text(aiStatusText) },
+                trailingContent = {
+                    if (!downloading) {
+                        TextButton(onClick = {
+                            scope.launch {
+                                downloading = true
+                                val ok = NotificationAiAnalyzer.downloadModel(ctx, aiUrl, requireWifi = true) {}
+                                downloading = false
+                                Toast.makeText(
+                                    ctx,
+                                    if (ok) "模型下载完成" else "下载失败（请连 Wi-Fi 或检查地址）",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }) { Text(if (present) "重新下载" else "下载模型") }
+                    } else {
+                        Text("下载中 ${aiProgress}%", color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+            )
+            OutlinedTextField(
+                value = aiUrl,
+                onValueChange = {
+                    aiUrl = it
+                    settingsStore.aiModelUrl = it
+                },
+                label = { Text("模型地址") },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
             )
             HorizontalDivider()
 

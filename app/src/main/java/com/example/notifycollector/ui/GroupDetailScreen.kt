@@ -212,6 +212,10 @@ fun GroupDetailScreen(nav: NavHostController, groupId: Long) {
 @Composable
 private fun ParcelCard(n: NotificationEntity, dim: Boolean) {
     val p = parseParcel(n)
+    // 优先展示离线 AI 补全的字段（公司/地址），取件码优先用 extractedCode（可能已被 AI 补充）
+    val displayCode = n.extractedCode ?: p.code
+    val displayCompany = if (n.aiUsed && !n.aiCompany.isNullOrBlank()) n.aiCompany else p.company
+    val displayLocation = if (n.aiUsed && !n.aiLocation.isNullOrBlank()) n.aiLocation else p.location
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
     Card(
@@ -244,14 +248,14 @@ private fun ParcelCard(n: NotificationEntity, dim: Boolean) {
             // 第一行：大号取件码 + 复制按钮（复制按钮紧挨取件码右侧）
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    p.code ?: "（无取件码）",
+                    displayCode ?: "（无取件码）",
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold
                 )
                 // 复制取件码：点一下把取件码写入剪贴板并弹提示；无码时给出兜底提示
                 IconButton(
                     onClick = {
-                        val code = p.code
+                        val code = displayCode
                         if (!code.isNullOrBlank()) {
                             clipboardManager.setText(AnnotatedString(code))
                             Toast.makeText(
@@ -278,7 +282,7 @@ private fun ParcelCard(n: NotificationEntity, dim: Boolean) {
                 }
             }
             Text(
-                p.company ?: "（未知快递）",
+                displayCompany ?: "（未知快递）",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -291,7 +295,7 @@ private fun ParcelCard(n: NotificationEntity, dim: Boolean) {
                 )
                 Spacer(Modifier.width(4.dp))
                 Text(
-                    p.location ?: n.text.take(40),
+                    displayLocation ?: n.text.take(40),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f)
