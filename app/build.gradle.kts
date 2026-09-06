@@ -61,5 +61,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
     // 离线 AI 解析（本地 LLM，首次运行下载模型）
-    implementation("com.google.mediapipe:tasks-genai:0.10.14")
+    // 0.10.22+ 才支持 Gemma-3（0.10.14 是 Gemma-2 时代，加载 gemma3 模型会原生 SIGABRT）
+    // 该版本为 Java 21 字节码，构建须用 JDK 21（org.gradle.java.home / JAVA_HOME 指向 JDK21）
+    implementation("com.google.mediapipe:tasks-genai:0.10.29")
 }

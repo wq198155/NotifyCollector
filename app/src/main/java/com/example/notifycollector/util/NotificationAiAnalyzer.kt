@@ -68,7 +68,6 @@ object NotificationAiAnalyzer {
                 val opts = LlmInferenceOptions.builder()
                     .setModelPath(f.absolutePath)
                     .setMaxTokens(AiConfig.MAX_TOKENS)
-                    .setTemperature(0.0f)
                     .build()
                 engine = LlmInference.createFromOptions(context.applicationContext, opts)
                 _state.value = Status.READY to 100
