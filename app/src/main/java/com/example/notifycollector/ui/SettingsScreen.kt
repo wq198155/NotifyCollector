@@ -92,7 +92,7 @@ fun SettingsScreen(nav: NavHostController) {
         aiStatus == NotificationAiAnalyzer.Status.DOWNLOADING || aiProgress > 0 -> "下载中 ${aiProgress}%"
         aiStatus == NotificationAiAnalyzer.Status.ERROR -> "下载/加载失败，请重试或换地址"
         present -> "已下载，首次推理时自动加载"
-        else -> "未下载（约 1.5GB，需 Wi-Fi）"
+        else -> "未下载（需 Wi-Fi）"
     }
 
     // —— 导出备份：SAF 选个目标文件，把全部分组打包成 zip ——
@@ -341,17 +341,6 @@ fun SettingsScreen(nav: NavHostController) {
                     }
                 }
             )
-            ListItem(
-                headlineContent = { Text("从本机导入模型") },
-                supportingContent = { Text("把电脑下好的 .task 传到手机后在此选择，完全不联网，最可靠") },
-                trailingContent = {
-                    if (!downloading && !importing) {
-                        TextButton(onClick = { modelImportLauncher.launch(arrayOf("*/*")) }) { Text("选择文件") }
-                    } else {
-                        Text("…", color = MaterialTheme.colorScheme.primary)
-                    }
-                }
-            )
             OutlinedTextField(
                 value = aiUrl,
                 onValueChange = {
@@ -363,6 +352,17 @@ fun SettingsScreen(nav: NavHostController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp)
+            )
+            ListItem(
+                headlineContent = { Text("从本机导入模型") },
+                supportingContent = { Text("把电脑下好的 .task 传到手机后在此选择，完全不联网，最可靠") },
+                trailingContent = {
+                    if (!downloading && !importing) {
+                        TextButton(onClick = { modelImportLauncher.launch(arrayOf("*/*")) }) { Text("选择文件") }
+                    } else {
+                        Text("…", color = MaterialTheme.colorScheme.primary)
+                    }
+                }
             )
             HorizontalDivider()
 
