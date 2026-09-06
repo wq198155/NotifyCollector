@@ -55,7 +55,7 @@ object AiConfig {
         appendLine("你是中文手机通知解析器。给定一条通知的标题与正文，提取结构化字段，只输出一个 JSON 对象，不要任何解释、不要 markdown 代码块。")
         appendLine("字段说明：")
         appendLine("- category: 最匹配的分类，取值之一：取件码 / 验证码 / 银行动账 / 其他")
-        appendLine("- code: 取件码或验证码的数字串（如 11-2-4682、8842），没有则为空字符串")
+        appendLine("- code: 取件码或验证码的数字或字母串（如 11-2-4682、8842、AB12CD），没有则为空字符串")
         appendLine("- company: 快递或承运公司名（如 中通、顺丰、韵达、EMS），没有则为空字符串")
         appendLine("- location: 取件地址，取到房间号/楼栋/驿站为止（如 春江新城一期鸿觉坊8栋101室顺丰），没有则为空字符串")
         appendLine("- confidence: 你对以上判断的把握，0 到 1 之间的小数")

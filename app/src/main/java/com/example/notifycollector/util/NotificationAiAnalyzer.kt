@@ -217,8 +217,9 @@ object NotificationAiAnalyzer {
         return runCatching {
             val j = JSONObject(jsonStr)
             val conf = j.optDouble("confidence", -1.0)
-            // 显式给出了低置信度 -> 不可信，退回正则
-            if (conf in 0.0..1.0 && conf < AiConfig.MIN_CONFIDENCE) return@runCatching null
+            // 仅当模型明确给出 (0, MIN_CONFIDENCE) 区间的置信度才视为不可信而退回正则；
+            // Gemma 等小模型常固定返回 0（并非"极低可信"），故 confidence=0 不触发退回。
+            if (conf > 0.0 && conf < AiConfig.MIN_CONFIDENCE) return@runCatching null
             AiResult(
                 category = j.optString("category").takeIf { it.isNotBlank() },
                 code = j.optString("code").takeIf { it.isNotBlank() },

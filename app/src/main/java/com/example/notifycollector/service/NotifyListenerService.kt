@@ -88,10 +88,31 @@ class NotifyListenerService : NotificationListenerService() {
 
         if (matched.isNotEmpty()) {
             for (g in matched) {
-                var code = RuleMatcher.extractCode(g, title, text)
+                val regexCode = RuleMatcher.extractCode(g, title, text)
+                val needsCode = g.codePattern.isNotBlank()
+                // 正则命中、但本分组需要提取 code 却没提取到（如验证码隔了标点、字母验证码、
+                // 或"不含验证码"之类仅字面提及）→ 交给本地 AI 进一步甄别：
+                //   1) 让 AI 补提取 code（支持数字/字母、隔标点等正则难处理的情况）；
+                //   2) 再让 AI 判断是否真的属于本分组，避免字面提及被误收。
+                if (needsCode && regexCode == null) {
+                    if (ai != null) {
+                        val aiCode = ai.code
+                        val aiBelongs = ai.category != null &&
+                            (ai.category == g.name || ai.category in g.name)
+                        // AI 能补提取到 code（数字/字母皆可），或 AI 明确判定属于本分组 → 入库；
+                        // 否则（AI 既没提取到码、也不认为属于本组）→ 不入库，避免误收
+                        // （如"不含验证码"之类仅字面提及、且无任何码可提取的通知）。
+                        if (!aiCode.isNullOrBlank() || aiBelongs) {
+                            val finalCode = aiCode ?: regexCode
+                            repo.insertNotification(buildEntity(g, sbn, title, text, finalCode, ai, ai.category))
+                        }
+                    }
+                    // AI 未开启则无 AI 可甄别，保持原行为：code 失败则丢弃
+                    continue
+                }
+                // code 提取成功（或本分组不需要 code）→ 正常入库；AI 仍可补 code 用于展示
+                var code = regexCode
                 if (ai != null && code.isNullOrBlank()) code = ai.code
-                // 带 codePattern 的分组必须真正提取到「数字取件号」才收集（含 AI 补充后）
-                if (g.codePattern.isNotBlank() && code == null) continue
                 repo.insertNotification(buildEntity(g, sbn, title, text, code, ai))
             }
         } else if (ai != null) {
