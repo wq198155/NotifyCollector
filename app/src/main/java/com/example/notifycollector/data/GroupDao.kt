@@ -12,7 +12,9 @@ interface GroupDao {
     @Query(
         "SELECT groups.*, " +
             "(SELECT COUNT(*) FROM notifications WHERE notifications.groupId = groups.id " +
-            "AND notifications.recycledAt IS NULL) AS notifCount " +
+            "AND notifications.recycledAt IS NULL) AS notifCount, " +
+            "(SELECT COUNT(*) FROM notifications WHERE notifications.groupId = groups.id " +
+            "AND notifications.recycledAt IS NULL AND notifications.read = 0) AS unreadCount " +
             "FROM groups ORDER BY groups.sortOrder ASC, groups.createdAt DESC"
     )
     fun groupsWithCount(): Flow<List<GroupWithCount>>

@@ -249,7 +249,7 @@ fun HomeScreen(nav: NavHostController) {
                                     },
                                     trailingContent = {
                                         Text(
-                                            gwc.notifCount.toString(),
+                                            gwc.unreadCount.toString(),
                                             style = MaterialTheme.typography.titleLarge,
                                             color = MaterialTheme.colorScheme.primary
                                         )
@@ -324,7 +324,7 @@ private fun ReorderRow(
                 )
             }
             Text(
-                gwc.notifCount.toString(),
+                gwc.unreadCount.toString(),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary
             )

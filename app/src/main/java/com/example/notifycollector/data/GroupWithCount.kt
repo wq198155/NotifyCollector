@@ -9,5 +9,8 @@ import androidx.room.Embedded
  */
 data class GroupWithCount(
     @Embedded val group: GroupEntity,
-    @ColumnInfo(name = "notifCount") val notifCount: Int
+    /** 该分组下全部未回收通知数量（删除确认等场景使用） */
+    @ColumnInfo(name = "notifCount") val notifCount: Int,
+    /** 未读通知数量（首页角标使用，已读不计） */
+    @ColumnInfo(name = "unreadCount") val unreadCount: Int
 )
