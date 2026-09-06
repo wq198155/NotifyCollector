@@ -1,6 +1,9 @@
 package com.example.notifycollector.ui
 
 import android.net.Uri
+import android.content.Intent
+import android.os.PowerManager
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -55,6 +58,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.notifycollector.data.AiConfig
 import com.example.notifycollector.data.SettingsStore
+import com.example.notifycollector.service.NotifyKeeper
 import com.example.notifycollector.util.NotificationAiAnalyzer
 import com.example.notifycollector.util.RuleBackup
 import com.example.notifycollector.viewmodel.MainViewModel
@@ -465,6 +469,50 @@ fun SettingsScreen(nav: NavHostController) {
                         Text("…", color = MaterialTheme.colorScheme.primary)
                     }
                 }
+            )
+            HorizontalDivider()
+
+            // —— 后台保活 ——
+            SectionHeader("后台保活")
+            val listenerEnabledNow = remember { NotifyKeeper.isListenerEnabled(ctx) }
+            ListItem(
+                headlineContent = { Text("通知监听状态") },
+                supportingContent = { Text(if (listenerEnabledNow) "已开启，正在接收通知" else "未开启，无法接收通知") },
+                trailingContent = {
+                    if (!listenerEnabledNow) {
+                        TextButton(onClick = {
+                            ctx.startActivity(
+                                Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            )
+                        }) { Text("去开启") }
+                    } else {
+                        Text("正常", color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+            )
+            val powerMgr = remember { ctx.getSystemService(PowerManager::class.java) }
+            val batteryExempt = remember { powerMgr.isIgnoringBatteryOptimizations(ctx.packageName) }
+            ListItem(
+                headlineContent = { Text("省电白名单") },
+                supportingContent = { Text(if (batteryExempt) "已豁免，不会被省电限制后台" else "未豁免，建议设为「不受限制」以防被杀") },
+                trailingContent = {
+                    if (!batteryExempt) {
+                        TextButton(onClick = {
+                            ctx.startActivity(
+                                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                                    .setData(Uri.parse("package:${ctx.packageName}"))
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            )
+                        }) { Text("申请不受限制") }
+                    } else {
+                        Text("已豁免", color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+            )
+            ListItem(
+                headlineContent = { Text("后台保活说明") },
+                supportingContent = { Text("前台常驻通知 + 15 分钟看门狗：监听断连会自动重绑、权限丢失会提醒重新开启；重启后自动恢复") }
             )
             HorizontalDivider()
 

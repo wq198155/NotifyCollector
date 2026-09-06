@@ -60,6 +60,9 @@ dependencies {
     kapt("androidx.room:room-compiler:2.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
+    // 后台保活看门狗（15 分钟周期任务，自动重绑 / 权限丢失提醒）
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
     // 离线 AI 解析（本地 LLM，首次运行下载模型）
     // 0.10.22+ 才支持 Gemma-3（0.10.14 是 Gemma-2 时代，加载 gemma3 模型会原生 SIGABRT）
     // 该版本为 Java 21 字节码，构建须用 JDK 21（org.gradle.java.home / JAVA_HOME 指向 JDK21）

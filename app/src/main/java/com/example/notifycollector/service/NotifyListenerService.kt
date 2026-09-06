@@ -2,6 +2,8 @@ package com.example.notifycollector.service
 
 import android.app.Notification
 import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
@@ -31,6 +33,34 @@ class NotifyListenerService : NotificationListenerService() {
         @Volatile
         private var lastSweep = 0L
         private const val SWEEP_INTERVAL = 60 * 60 * 1000L
+
+        /** 当前是否已与系统建立监听连接（看门狗据此决定是否重绑） */
+        @Volatile
+        var isConnected = false
+
+        /** 供看门狗/BootReceiver 在任意上下文请求重绑（静态方法，无需持有实例） */
+        fun requestRebindStatic(ctx: Context) {
+            runCatching {
+                requestRebind(ComponentName(ctx, NotifyListenerService::class.java))
+            }
+        }
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // 前台保活通知由独立的 KeepAliveService 持有，这里仅返回 STICKY 便于系统重建
+        return START_STICKY
+    }
+
+    /**
+     * 监听连接成功：标记已连接。
+     */
+    override fun onListenerConnected() {
+        isConnected = true
+        super.onListenerConnected()
     }
 
     /**
@@ -38,10 +68,16 @@ class NotifyListenerService : NotificationListenerService() {
      * 缩短「死亡窗口」——断连期间到达的通知无法补收，重连越快丢得越少。
      */
     override fun onListenerDisconnected() {
+        isConnected = false
         runCatching {
             requestRebind(ComponentName(this, NotifyListenerService::class.java))
         }
         super.onListenerDisconnected()
+    }
+
+    override fun onDestroy() {
+        isConnected = false
+        super.onDestroy()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {

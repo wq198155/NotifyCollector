@@ -12,6 +12,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
 import com.example.notifycollector.ui.theme.NotifyCollectorTheme
+import com.example.notifycollector.service.KeepAliveService
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,6 +20,8 @@ class MainActivity : ComponentActivity() {
         // 调试/演示辅助：通过 Intent extra startRoute 指定初始页。
         // 例：`adb shell am start -n .../MainActivity --es startRoute settings`
         val startRoute = intent?.getStringExtra("startRoute")
+        // App 进入前台即挂常驻保活前台服务（前台上下文启动 FGS 不受后台限制）
+        KeepAliveService.start(this)
         setContent {
             NotifyCollectorTheme {
                 AppNav(startRoute = startRoute)
