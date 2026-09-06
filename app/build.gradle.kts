@@ -12,8 +12,8 @@ android {
         applicationId = "com.example.notifycollector"
         minSdk = 24
         targetSdk = 34
-        versionCode = 11
-        versionName = "1.11"
+        versionCode = 12
+        versionName = "1.12"
     }
 
     buildFeatures {
@@ -29,9 +29,18 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+    signingConfigs {
+        create("release") {
+            storeFile = file("C:/Users/wq/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }
