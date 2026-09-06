@@ -89,7 +89,8 @@ fun SettingsScreen(nav: NavHostController) {
     var importing by remember { mutableStateOf(false) }
     val aiStatusText = when {
         aiStatus == NotificationAiAnalyzer.Status.READY -> "模型已就绪"
-        aiStatus == NotificationAiAnalyzer.Status.DOWNLOADING || aiProgress > 0 -> "下载中 ${aiProgress}%"
+        aiStatus == NotificationAiAnalyzer.Status.DOWNLOADING ->
+            if (aiProgress >= 0) "下载中 ${aiProgress}%" else "下载中…"
         aiStatus == NotificationAiAnalyzer.Status.ERROR -> "下载/加载失败，请重试或换地址"
         present -> "已下载，首次推理时自动加载"
         else -> "未下载（需 Wi-Fi）"
@@ -335,7 +336,7 @@ fun SettingsScreen(nav: NavHostController) {
                         }) { Text(if (present) "重新下载" else "下载模型") }
                     } else {
                         Text(
-                            if (importing) "导入中…" else "下载中 ${aiProgress}%",
+                            if (importing) "导入中…" else if (aiProgress >= 0) "下载中 ${aiProgress}%" else "下载中…",
                             color = MaterialTheme.colorScheme.primary
                         )
                     }

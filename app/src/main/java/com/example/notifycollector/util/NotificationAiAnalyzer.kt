@@ -132,7 +132,14 @@ object NotificationAiAnalyzer {
             while (input.read(buf).also { read = it } != -1) {
                 output.write(buf, 0, read)
                 soFar += read
-                if (total > 0) onProgress((soFar * 100 / total).toInt().coerceIn(0, 100))
+                if (total > 0) {
+                    val pct = (soFar * 100 / total).toInt().coerceIn(0, 100)
+                    _state.value = Status.DOWNLOADING to pct
+                    onProgress(pct)
+                } else {
+                    // 服务器未返回 Content-Length 时无法算百分比，仍更新状态避免一直卡在 0%
+                    _state.value = Status.DOWNLOADING to -1
+                }
             }
             output.flush(); output.close(); input.close(); conn.disconnect()
             onProgress(100)
