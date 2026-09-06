@@ -16,14 +16,39 @@ object AiConfig {
     const val MIN_CONFIDENCE = 0.5
 
     /**
-     * 默认模型地址（留空）。
-     * MediaPipe 官方 GCS 路径已整体下架、HuggingFace 需登录授权，公共免鉴权直链不稳定，
-     * 因此默认不填。推荐二选一：
-     *  1) 自托管：把 model.task 放到你自己的服务器（如 https://你的域名/models/gemma-2b-it-cpu-int4.task），
-     *     在「设置 → AI 智能解析 → 模型地址」填写该地址后点「下载模型」；
-     *  2) 或点「从本机导入」，把电脑上下好的 .task 通过微信/数据线传到手机后直接导入（完全不联网）。
+     * 官方推荐模型地址（默认下载直链）。
+     * 这是一台自托管服务器上的 Gemma-3 1B int4 量化模型，可在「设置 → AI 智能解析」中一键下载。
+     * 用户也可在「模型地址」文本框里填写任意第三方兼容的 .task 模型地址按需下载。
      */
-    const val DEFAULT_MODEL_URL = ""
+    const val DEFAULT_MODEL_URL = "https://m.152727.xyz:8443/ai/gemma3-1b-it-int4.task"
+
+    /**
+     * 设置页「支持哪些模型」说明（纯文本逐行展示）。
+     * 本应用基于 MediaPipe LLM Inference 在手机本地离线推理，仅支持 Gemma 系列 .task 模型。
+     */
+    val SUPPORTED_MODELS: List<String> = listOf(
+        "本应用基于 MediaPipe LLM Inference 在手机本地离线推理，全程不联网。",
+        "仅支持已转换为 .task 格式的 Gemma 系列模型：",
+        "• Gemma-3 1B / 2B（int4 量化，推荐：体积小、响应快）",
+        "• Gemma-2 2B / 9B（int4 量化）",
+        "模型须为 int4 量化、CPU 可用的 .task 文件。",
+        "不支持：PyTorch(.bin/.safetensors)、GGUF，以及 GPT / 通义 / 文心等云端模型。"
+    )
+
+    /**
+     * 校验用户填写的模型地址是否「可能可用」（格式/家族层面的前置检查）。
+     * 返回 null 表示通过；否则返回给用户的中文提示。
+     * 注意：最终能否真正加载，由「验证模型」按钮（NotificationAiAnalyzer.verifyModel）决定。
+     */
+    fun validateModelUrl(raw: String): String? {
+        val u = raw.trim()
+        if (u.isBlank()) return null // 留空=使用官方推荐模型，不算错误
+        if (!u.endsWith(".task", ignoreCase = true))
+            return "模型须为 MediaPipe .task 文件（当前仅支持 Gemma 系列 .task），请检查地址后缀"
+        if (!u.contains("gemma", ignoreCase = true))
+            return "建议选择 Gemma 系列 .task 模型，其他架构可能无法被当前框架加载"
+        return null
+    }
 
     /** 构造给模型的提示词：要求只输出一个 JSON 对象 */
     fun buildPrompt(title: String, text: String): String = buildString {

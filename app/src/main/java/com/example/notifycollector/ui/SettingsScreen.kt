@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -41,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -48,6 +51,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.example.notifycollector.data.AiConfig
 import com.example.notifycollector.data.SettingsStore
 import com.example.notifycollector.util.NotificationAiAnalyzer
 import com.example.notifycollector.util.RuleBackup
@@ -87,6 +91,30 @@ fun SettingsScreen(nav: NavHostController) {
     var aiUrl by remember { mutableStateOf(settingsStore.aiModelUrl) }
     var downloading by remember { mutableStateOf(false) }
     var importing by remember { mutableStateOf(false) }
+    var verifying by remember { mutableStateOf(false) }
+    var showModels by remember { mutableStateOf(false) }
+    // 地址格式/家族前置校验（空=用官方推荐模型，不算错误）
+    val urlWarning = AiConfig.validateModelUrl(aiUrl)
+
+    /** 下载并自动验证：成功提示「下载并验证通过」，失败给出原因（含不支持的模型） */
+    fun startDownload(url: String) {
+        scope.launch {
+            downloading = true
+            val derr = NotificationAiAnalyzer.downloadModel(ctx, url, requireWifi = true) {}
+            downloading = false
+            present = NotificationAiAnalyzer.isModelPresent(ctx)
+            if (derr != null) {
+                Toast.makeText(ctx, "下载失败：$derr", Toast.LENGTH_LONG).show()
+                return@launch
+            }
+            val verr = NotificationAiAnalyzer.verifyModel(ctx)
+            Toast.makeText(
+                ctx,
+                if (verr == null) "模型下载并验证通过，可正常使用" else "已下载但验证未通过：$verr",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
     val aiStatusText = when {
         aiStatus == NotificationAiAnalyzer.Status.READY -> "模型已就绪"
         aiStatus == NotificationAiAnalyzer.Status.DOWNLOADING ->
@@ -320,25 +348,36 @@ fun SettingsScreen(nav: NavHostController) {
                 headlineContent = { Text("模型状态") },
                 supportingContent = { Text(aiStatusText) },
                 trailingContent = {
-                    if (!downloading && !importing) {
-                        TextButton(onClick = {
-                            scope.launch {
-                                downloading = true
-                                val err = NotificationAiAnalyzer.downloadModel(ctx, aiUrl, requireWifi = true) {}
-                                downloading = false
-                                present = NotificationAiAnalyzer.isModelPresent(ctx)
-                                Toast.makeText(
-                                    ctx,
-                                    if (err == null) "模型下载完成" else "下载失败：$err",
-                                    Toast.LENGTH_LONG
-                                ).show()
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        if (downloading || importing) {
+                            Text(
+                                if (importing) "导入中…" else if (aiProgress >= 0) "下载中 ${aiProgress}%" else "下载中…",
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        } else {
+                            TextButton(onClick = {
+                                startDownload(aiUrl.ifBlank { AiConfig.DEFAULT_MODEL_URL })
+                            }) { Text(if (present) "重新下载" else "下载模型") }
+                            if (present && !verifying) {
+                                TextButton(onClick = {
+                                    scope.launch {
+                                        verifying = true
+                                        val err = NotificationAiAnalyzer.verifyModel(ctx)
+                                        verifying = false
+                                        Toast.makeText(
+                                            ctx,
+                                            if (err == null) "模型验证通过，可正常使用" else "不支持：$err",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                                }) { Text("验证模型") }
+                            } else if (verifying) {
+                                Text("验证中…", color = MaterialTheme.colorScheme.primary)
                             }
-                        }) { Text(if (present) "重新下载" else "下载模型") }
-                    } else {
-                        Text(
-                            if (importing) "导入中…" else if (aiProgress >= 0) "下载中 ${aiProgress}%" else "下载中…",
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        }
                     }
                 }
             )
@@ -348,12 +387,71 @@ fun SettingsScreen(nav: NavHostController) {
                     aiUrl = it
                     settingsStore.aiModelUrl = it
                 },
-                label = { Text("模型地址") },
+                label = { Text("模型地址（自选第三方模型）") },
+                placeholder = { Text("留空则使用官方推荐模型") },
                 singleLine = true,
+                isError = urlWarning != null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp)
             )
+            // 默认模型下载链接：点击直接下载官方推荐模型，不写入上方文本框
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable(enabled = !downloading && !importing) {
+                        startDownload(AiConfig.DEFAULT_MODEL_URL)
+                    }
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Filled.FileDownload,
+                    contentDescription = null,
+                    tint = if (downloading || importing) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    "下载官方推荐模型（Gemma-3 1B · int4）",
+                    color = if (downloading || importing) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodyMedium.copy(textDecoration = TextDecoration.Underline)
+                )
+            }
+            // 地址校验提示（不支持的模型/格式会在这里给出提示）
+            if (urlWarning != null) {
+                Text(
+                    urlWarning,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
+                )
+            }
+            // 支持哪些模型说明（可展开）
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { showModels = !showModels }
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    if (showModels) "收起支持的模型说明" else "支持哪些模型？（点击展开）",
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            if (showModels) {
+                Column(Modifier.padding(horizontal = 16.dp, vertical = 2.dp)) {
+                    AiConfig.SUPPORTED_MODELS.forEach { line ->
+                        Text(
+                            line,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
             ListItem(
                 headlineContent = { Text("从本机导入模型") },
                 supportingContent = { Text("把电脑下好的 .task 传到手机后在此选择，完全不联网，最可靠") },

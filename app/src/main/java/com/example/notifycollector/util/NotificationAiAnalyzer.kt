@@ -84,6 +84,17 @@ object NotificationAiAnalyzer {
         engine = null
     }
 
+    /**
+     * 验证已下载模型是否能被当前框架真正加载（用于用户自选/第三方模型）。
+     * 返回 null 表示可用（已就绪），否则返回人类可读的失败原因。
+     * 与 downloadModel 不同：这里会把引擎真正构建一次，能拦截「非 Gemma 系列 / 文件损坏」等不兼容情况。
+     */
+    suspend fun verifyModel(context: Context): String? = withContext(Dispatchers.Default) {
+        if (!isModelPresent(context)) return@withContext "尚未下载模型，无法验证"
+        val ok = ensureLoaded(context)
+        if (ok) null else "该模型无法被当前框架加载（可能不是 Gemma 系列 .task，或文件已损坏），请更换模型后重试"
+    }
+
     private fun isWifi(context: Context): Boolean {
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
         val net = cm?.activeNetwork ?: return false
@@ -101,6 +112,7 @@ object NotificationAiAnalyzer {
         requireWifi: Boolean = true,
         onProgress: (Int) -> Unit = {}
     ): String? = withContext(Dispatchers.IO) {
+        close() // 先卸掉旧引擎，避免覆盖文件后用缓存的旧引擎误判
         if (url.isBlank()) return@withContext "未填写模型地址，请先填写或改用「从本机导入」"
         if (requireWifi && !isWifi(context)) {
             _state.value = Status.ERROR to 0
@@ -156,6 +168,7 @@ object NotificationAiAnalyzer {
      * 返回 null 表示成功，否则返回失败原因。
      */
     suspend fun importModelFromUri(context: Context, uri: Uri): String? = withContext(Dispatchers.IO) {
+        close() // 先卸掉旧引擎，确保下次推理加载的是新导入的模型
         try {
             val dir = File(context.filesDir, "ai")
             dir.mkdirs()
